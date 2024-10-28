@@ -1,0 +1,28 @@
+# HTTP requests
+requests==2.31.0
+
+# Environment variables
+python-dotenv==1.0.0
+
+# Type hints
+typing-extensions==4.9.0
+
+# JSON handling
+json5==0.9.14
+
+# Time handling
+pytz==2024.1
+
+# Optional but recommended for development
+black==24.2.0  # Code formatting
+pylint==3.0.3  # Code linting
+pytest==8.0.2  # Testing
+pytest-cov==4.1.0  # Test coverage
+
+# Rate limiting and retry logic
+ratelimit==2.2.1
+tenacity==8.2.3
+
+# Optional - for future web interface
+fastapi==0.109.2
+uvicorn==0.27.1
