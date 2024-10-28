@@ -54,62 +54,65 @@ A sophisticated Retrieval-Augmented Generation (RAG) system that combines multip
 ### Installation
 
 1. **Clone the Repository**
-   ```bash
-   git clone https://github.com/yourusername/o1-multi-agent-rag.git
-   cd o1-multi-agent-rag
-   ```
+```bash
+git clone https://github.com/kongpop10/MultiAgentRAG.git
+cd MultiAgentRAG
+```
 
 2. **Set Up Virtual Environment**
-   ```bash
-   python -m venv .venv
-   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-   ```
+```bash
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+```
 
 3. **Install Dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
+```bash
+pip install -r requirements.txt
+```
 
 4. **Configure Environment**
-   - Create `.env` file in project root
-   - Add your Groq API key:
-     ```env
-     GROQ_API_KEY=your_api_key_here
-     ```
+```bash
+cp .env.example .env
+# Edit .env and add your Groq API key
+```
 
 ## 💻 Usage
 
-### Basic Operation
+```bash
+# Run the system
+python main.py
 
-## 📦 Dependencies
-- `requests`: HTTP requests handling
-- `python-dotenv`: Environment variable management
-- `typing-extensions`: Type hinting support
+# Example interaction
+Enter your query: What are the implications of quantum computing?
 
+=== Knowledge Retrieval ===
+[System retrieves comprehensive information]
+
+=== Reasoning Steps ===
+Step 1: Current State Analysis
+Step 2: Impact Assessment
+Step 3: Future Implications
+
+=== Final Synthesis ===
+[System provides actionable insights]
+```
 
 ## 🏗️ Project Structure
-o1-multi-agent-rag/
-├── main.py # Core application logic
-├── config.py # Configuration and prompts
-├── requirements.txt # Project dependencies
-├── .env # Environment variables (not tracked)
-├── .gitignore # Git ignore rules
-└── README.md # Documentation
-
-## 📦 Requirements
-
-txt
-requests==2.31.0
-python-dotenv==1.0.0
-typing-extensions==4.9.0
+```
+MultiAgentRAG/
+├── main.py           # Core application logic
+├── config.py         # Configuration and prompts
+├── requirements.txt  # Dependencies
+├── .env             # API key (create from .env.example)
+└── README.md        # Documentation
+```
 
 ## ⚙️ Configuration
 
 ### Environment Variables
-Required variables in `.env`:
-
-env
-GROQ_API_KEY=your_api_key_here
+```env
+GROQ_API_KEY=your_api_key_here  # Get from console.groq.com
+```
 
 ### Model Configurations
 Available in `config.py`:
@@ -117,46 +120,6 @@ Available in `config.py`:
 - Rate limit parameters
 - System prompts
 - Error handling settings
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create your feature branch
-   ```bash
-   git checkout -b feature/AmazingFeature
-   ```
-3. Commit your changes
-   ```bash
-   git commit -m 'Add AmazingFeature'
-   ```
-4. Push to the branch
-   ```bash
-   git push origin feature/AmazingFeature
-   ```
-5. Open a Pull Request
-
-## 📝 License
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-- Groq AI for their powerful models and API
-- Open source community
-- All contributors
-
-## 📫 Support & Contact
-- GitHub Issues for bug reports
-- Pull Requests for contributions
-- Discussions for questions
-
-## 🔮 Roadmap
-- [ ] Additional model support
-- [ ] Enhanced error handling
-- [ ] Performance optimizations
-- [ ] Extended documentation
-- [ ] Testing suite
-- [ ] CI/CD integration
-- [ ] Web interface
-- [ ] API endpoint support
 
 ## ⚠️ Known Limitations
 1. **Rate Limits**
@@ -171,18 +134,19 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
    - Requires stable internet connection
    - Subject to API availability
 
-## 🔍 Troubleshooting
-Common issues and solutions:
-1. Rate limit errors: System automatically handles with backoff
-2. Token limits: Implemented automatic truncation
-3. API errors: Comprehensive error handling included
+## 🔮 Ways to Improve
+- [ ] Additional model support
+- [ ] Enhanced error handling
+- [ ] Performance optimizations
+- [ ] Web interface
+- [ ] API endpoint support
 
-## 📊 Performance
-- Average response time: 2-5 seconds
-- Token usage optimization
-- Batch processing capabilities
+## 📫 Support & Contact
+- [Report Issues](https://github.com/kongpop10/MultiAgentRAG/issues)
+- [Request Features](https://github.com/kongpop10/MultiAgentRAG/issues)
+
+## 📝 License
+MIT License
 
 ---
-Made with ❤️ by [Your Name/Organization]
-
-[GitHub Repository](https://github.com/kongpop10/MultiAgentRAG) | [Report Bug](https://github.com/kongpop10/MultiAgentRAG/issues) | [Request Feature](https://github.com/kongpop10/MultiAgentRAG/issues)
+[GitHub Repository](https://github.com/kongpop10/MultiAgentRAG) | [Report Bug](https://github.com/kongpop10/MultiAgentRAG/issues)
