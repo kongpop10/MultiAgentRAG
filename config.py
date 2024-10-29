@@ -49,30 +49,90 @@ TOKEN_CONFIGS = {
     'summary_length': 150
 }
 
-# Update Google API configuration for paid tier
+# Update Google API configuration for Gemini 1.5 Flash (Free Tier)
 GOOGLE_API_CONFIG = {
-    'model': 'gemini-1.5-pro',  # Using pro model instead of flash
-    'api_url': 'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent',
-    'max_tokens': 8192,  # Increased token limit
+    'model': 'gemini-1.5-flash',
+    'api_url': 'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent',
+    'max_tokens': 1000000,
     'api_version': 'v1',
-    'streaming': True,  # Enable streaming for faster responses
-    'safety_settings': {
-        'HARM_CATEGORY_HARASSMENT': 'BLOCK_NONE',
-        'HARM_CATEGORY_HATE_SPEECH': 'BLOCK_NONE',
-        'HARM_CATEGORY_SEXUALLY_EXPLICIT': 'BLOCK_NONE',
-        'HARM_CATEGORY_DANGEROUS_CONTENT': 'BLOCK_NONE'
+    'streaming': True,
+    'document_thresholds': {
+        'small': 32768,
+        'medium': 128000,
+        'large': 1000000
     },
-    'parallel_requests': True,  # Enable parallel processing
-    'chunk_size': 4000,  # Larger chunk size for processing
-    'overlap': 400      # Increased overlap for better context
+    'chunk_settings': {
+        'size': 32000,
+        'overlap': 1000,
+        'max_parallel': 2
+    },
+    'rate_limits': {
+        'requests_per_minute': 15,
+        'tokens_per_minute': 1000000,
+        'min_delay': 4,
+        'requests_per_day': 1500
+    },
+    'safety_settings': [
+        {
+            "category": "HARM_CATEGORY_HARASSMENT",
+            "threshold": "BLOCK_NONE"
+        },
+        {
+            "category": "HARM_CATEGORY_HATE_SPEECH",
+            "threshold": "BLOCK_NONE"
+        },
+        {
+            "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+            "threshold": "BLOCK_NONE"
+        },
+        {
+            "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+            "threshold": "BLOCK_NONE"
+        }
+    ]
 }
 
-# Enhanced document handling for paid tier
+# Update document configuration for free tier
 DOCUMENT_CONFIG = {
-    'small_doc_limit': 4000,    # Increased limits
-    'medium_doc_limit': 8192,   # Maximum pro model context
-    'chunk_size': 4000,         # Larger chunks
-    'overlap': 400,             # Better context preservation
-    'parallel_chunks': 5,       # Number of parallel chunk processing
-    'max_parallel_requests': 10  # Maximum parallel requests
+    'default_model': 'mixtral-8x7b-32768',
+    'fallback_model': 'gemini-1.5-flash',
+    'model_thresholds': {
+        'small': 8000,
+        'medium': 16000,
+        'large': 32000
+    },
+    'chunk_settings': {
+        'size': 8000,
+        'overlap': 500,
+        'max_parallel': 5
+    },
+    'daily_request_limit': 1500,
+    'max_parallel_requests': 3
+}
+
+# Token pricing configuration (per 1M tokens)
+TOKEN_PRICING = {
+    'gemini_flash': {
+        'input': 0.075,   # $0.075 per 1M input tokens
+        'output': 0.30,   # $0.30 per 1M output tokens
+        'context_cache': 0.01875  # $0.01875 per 1M tokens for context caching
+    },
+    'mixtral': {
+        'input': 0.50,    # Mixtral pricing for comparison
+        'output': 1.50
+    }
+}
+
+# Groq API Configuration
+GROQ_API_CONFIG = {
+    'model': 'mixtral-8x7b-32768',
+    'api_url': 'https://api.groq.com/openai/v1/chat/completions',
+    'max_tokens': 32768,
+    'temperature': 0.7,
+    'top_p': 0.8,
+    'chunk_settings': {
+        'size': 8000,
+        'overlap': 500,
+        'max_parallel': 5
+    }
 }

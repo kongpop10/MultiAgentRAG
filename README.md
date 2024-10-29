@@ -1,187 +1,168 @@
-# O1 Multi-Agent RAG System
+# Enhanced RAG System with Multi-Model Fallback
 
-A sophisticated Retrieval-Augmented Generation (RAG) system that combines Google's Gemini Pro and Groq's AI models for comprehensive analysis and problem-solving, with advanced document handling capabilities.
+A robust Retrieval-Augmented Generation (RAG) system optimized for large document processing, using Mixtral-8x7B-32K as primary model with Gemini 1.5 Flash fallback. Designed for efficient handling of large documents while managing API costs and rate limits.
 
 ## 🌟 Features
 
 ### 🤖 Multi-Model Architecture
-- **Knowledge Retrieval** (Google Gemini Pro)
-  - Parallel document processing
-  - Advanced chunking with overlap
-  - Asynchronous operations
-  - Adaptive model selection
-  - Auto-scaling based on document size
+- **Primary Model: Mixtral-8x7B-32K via Groq**
+  - 32K token context window
+  - Efficient parallel processing
+  - Production-ready performance
+  - Better data privacy
+  - Initial free credits ($10)
+  - Optimized for large documents
 
-- **Dynamic Reasoning** (Llama-3.1-70B)
-  - Multi-step reasoning pipeline
-  - Context-aware analysis
-  - Sequential logic processing
-  - Dynamic step generation
+- **Fallback Model: Gemini 1.5 Flash (Free Tier)**
+  - Free backup option
+  - 1M token context window
+  - Rate limits:
+    - 15 requests per minute
+    - 1,500 requests per day
+    - 1M tokens per minute
 
-- **Final Synthesis** (Gemma-7B)
-  - Comprehensive insight integration
-  - Structured recommendations
-  - Context preservation
-  - Clear action items
+### 🔄 Smart Processing Pipeline
+1. **Automatic Model Selection**
+   - Documents > 32K tokens: Mixtral with chunking
+   - Medium docs (8K-32K): Smart chunking
+   - Small docs (<8K): Direct processing
+   - Automatic fallback on failures
 
-### 🔄 Hybrid Processing Pipeline
-1. **Document Analysis**
-   - Automatic size detection
-   - Smart chunking strategy
+2. **Advanced Document Handling**
+   - Dynamic chunk sizing
+   - Context-preserving overlap
    - Parallel processing
-   - Context preservation
+   - Rate limit management
+   - Daily usage tracking
 
-2. **Knowledge Extraction**
-   - Model selection based on complexity
-   - Asynchronous chunk processing
-   - Context merging
-   - Intelligent synthesis
-
-3. **Reasoning & Synthesis**
-   - Multi-step analysis
-   - Cross-reference validation
-   - Coherent output generation
+3. **Error Recovery**
+   - Automatic model fallback
+   - Request persistence
+   - Rate limit handling
+   - Error logging
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 ```bash
 Python 3.8+
-Groq API access
-Google API access (Gemini Pro)
-```
-
-### Installation
-```bash
-# Clone and setup
-git clone https://github.com/kongpop10/MultiAgentRAG.git
-cd MultiAgentRAG
-
-# Create virtual environment
-python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
-
-# Install dependencies
 pip install -r requirements.txt
-
-# Configure environment
-cp .env.example .env
-# Add your API keys to .env
 ```
 
-## 💻 Usage
+### API Keys Setup
+1. Get Groq API key from [Groq Console](https://console.groq.com)
+2. Get Gemini API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
+3. Create `.env` file:
+```bash
+GROQ_API_KEY=your_groq_api_key
+GOOGLE_API_KEY=your_google_api_key
+```
 
-### Basic Query
+### Basic Usage
 ```python
-python main.py
-Enter your query: Analyze the impact of AI on healthcare
+from main import RAGSystem
+
+# Initialize system
+rag = RAGSystem()
+
+# Process a query
+result = rag.process_query("Analyze this document", document="Your document text here")
+
+# Access results
+print(result['knowledge_retrieval'])  # Initial information
+print(result['reasoning_steps'])      # Analysis steps
+print(result['final_synthesis'])      # Final summary
 ```
-
-### Document Analysis
-```python
-# The system automatically handles:
-- Small documents (<4000 tokens): Direct processing
-- Medium documents: Parallel chunk processing
-- Large documents (>8192 tokens): Mixtral model
-```
-
-## 🔧 Advanced Features
-
-### Parallel Processing
-- Automatic thread pool management
-- Configurable chunk sizes
-- Overlap for context preservation
-- Asynchronous operations
-
-### Error Handling
-- Rate limit management
-- Automatic retries
-- Error recovery
-- Comprehensive logging
-
-### Document Processing
-- Smart chunking
-- Context preservation
-- Parallel execution
-- Adaptive model selection
 
 ## ⚙️ Configuration
 
-### Environment Setup
-```env
-GROQ_API_KEY=your_groq_api_key    # From console.groq.com
-GOOGLE_API_KEY=your_google_api_key # From Google Cloud Console
-```
-
-### Customizable Parameters
+### Model Settings (`config.py`)
 ```python
-# config.py
-- Chunk sizes
-- Token limits
-- Parallel requests
-- Safety settings
-- Processing thresholds
+DOCUMENT_CONFIG = {
+    'model_thresholds': {
+        'small': 8000,    # Direct processing
+        'medium': 16000,  # Smart chunking
+        'large': 32000    # Full parallel
+    },
+    'chunk_settings': {
+        'size': 8000,     # Tokens per chunk
+        'overlap': 500,   # Context overlap
+        'max_parallel': 5 # Parallel requests
+    }
+}
 ```
 
-## 📊 Performance
+### Rate Limits
+- **Mixtral (Groq)**
+  - Based on available credits
+  - No strict RPM limits
+  - 32K tokens per request
 
-### Processing Capabilities
-- Small docs: < 2 seconds
+- **Gemini Flash (Free)**
+  - 15 RPM
+  - 1,500 daily requests
+  - 1M TPM (tokens per minute)
+
+## 📊 Performance & Costs
+
+### Processing Speed
+- Small docs (<8K): 1-2 seconds
 - Medium docs: 2-5 seconds
-- Large docs: 5-10 seconds
+- Large docs: 5-15 seconds
 
-### Optimization Features
-- Parallel processing
-- Async operations
-- Smart caching
-- Rate limit optimization
+### Cost Estimates
+- **Mixtral**: $10 free credits
+  - Input: $0.50/1M tokens
+  - Output: $1.50/1M tokens
+
+- **Gemini Flash**: Free tier
+  - No cost for basic usage
+  - Limited by rate restrictions
 
 ## 🛠️ Development
 
 ### Project Structure
 ```
 MultiAgentRAG/
-├── main.py           # Core logic & API integration
-├── config.py         # Settings & configurations
+├── main.py           # Core logic
+├── config.py         # Settings
 ├── requirements.txt  # Dependencies
-├── .env             # API keys (from .env.example)
+├── .env             # API keys
 └── README.md        # Documentation
 ```
 
 ### Key Components
-- Hybrid Knowledge Retriever
-- Reasoning Orchestrator
-- Enhanced Gemini Integration
-- Parallel Processing Engine
+- `HybridKnowledgeRetriever`: Model management
+- `MixtralKnowledgeRetriever`: Primary processing
+- `GeminiKnowledgeRetriever`: Fallback handling
+- `RAGSystem`: Orchestration
 
-## 🔮 Future Enhancements
+## ⚠️ Limitations
+
+### Mixtral (Primary)
+- 32K token limit per request
+- Credit-based usage
+- Requires API key
+
+### Gemini Flash (Fallback)
+- Rate limits (15 RPM)
+- Daily request cap
+- Data used by Google
+
+## 🔮 Roadmap
 - [ ] Streaming responses
+- [ ] Caching system
 - [ ] Web interface
-- [ ] API endpoints
-- [ ] Document caching
-- [ ] Enhanced parallelization
-- [ ] Memory optimization
-
-## ⚠️ Limitations & Considerations
-1. **API Constraints**
-   - Rate limits vary by tier
-   - Token limitations
-   - Response time variation
-
-2. **Resource Usage**
-   - Memory for large documents
-   - CPU for parallel processing
-   - Network bandwidth
+- [ ] Cost monitoring
+- [ ] Performance analytics
+- [ ] Batch processing
 
 ## 📫 Support
 - [Report Issues](https://github.com/kongpop10/MultiAgentRAG/issues)
-- [Feature Requests](https://github.com/kongpop10/MultiAgentRAG/issues)
-- [Documentation](https://github.com/kongpop10/MultiAgentRAG/wiki)
+- [Request Features](https://github.com/kongpop10/MultiAgentRAG/issues)
 
 ## 📝 License
 MIT License
 
 ---
 Made with 💻 by [Kongpop]
-
-[Repository](https://github.com/kongpop10/MultiAgentRAG) | [Issues](https://github.com/kongpop10/MultiAgentRAG/issues)

@@ -40,9 +40,38 @@ class GeminiKnowledgeRetriever:
         self.requests_today = 0
         self.minute_start = time.time()
         self.day_start = time.time()
+        
+        # Load daily request count from persistent storage if available
+        self.load_request_count()
+
+    def load_request_count(self):
+        try:
+            with open('.request_count', 'r') as f:
+                data = json.load(f)
+                if time.time() - data['day_start'] < 86400:  # If same day
+                    self.requests_today = data['count']
+                    self.day_start = data['day_start']
+        except:
+            pass
+
+    def save_request_count(self):
+        try:
+            with open('.request_count', 'w') as f:
+                json.dump({
+                    'count': self.requests_today,
+                    'day_start': self.day_start
+                }, f)
+        except:
+            pass
 
     def _check_and_update_rate_limits(self):
         current_time = time.time()
+        
+        # Check daily limit first
+        if self.requests_today >= DOCUMENT_CONFIG['daily_request_limit']:
+            remaining_time = 86400 - (current_time - self.day_start)
+            raise Exception(f"Daily request limit reached ({DOCUMENT_CONFIG['daily_request_limit']}). "
+                          f"Please wait {remaining_time/3600:.1f} hours.")
         
         # Reset minute counters if a minute has passed
         if current_time - self.minute_start >= 60:
@@ -50,9 +79,10 @@ class GeminiKnowledgeRetriever:
             self.minute_start = current_time
 
         # Reset daily counters if a day has passed
-        if current_time - self.day_start >= 86400:  # 24 hours
+        if current_time - self.day_start >= 86400:
             self.requests_today = 0
             self.day_start = current_time
+            self.save_request_count()
 
         # Check rate limits
         if self.requests_this_minute >= GOOGLE_API_CONFIG['rate_limits']['requests_per_minute']:
@@ -61,13 +91,6 @@ class GeminiKnowledgeRetriever:
             time.sleep(wait_time)
             self.requests_this_minute = 0
             self.minute_start = time.time()
-
-        if self.requests_today >= GOOGLE_API_CONFIG['rate_limits']['requests_per_day']:
-            wait_time = 86400 - (current_time - self.day_start)
-            print(f"\nDaily limit reached. Waiting {wait_time/3600:.2f} hours...")
-            time.sleep(wait_time)
-            self.requests_today = 0
-            self.day_start = time.time()
 
         # Ensure minimum delay between requests
         time_since_last = current_time - self.last_request_time
@@ -121,6 +144,7 @@ class GeminiKnowledgeRetriever:
             self.last_request_time = time.time()
             self.requests_this_minute += 1
             self.requests_today += 1
+            self.save_request_count()  # Save updated count
             
             response = requests.post(
                 url,
@@ -193,7 +217,8 @@ class EnhancedGeminiRetriever:
     def __init__(self):
         self.api_key = GOOGLE_API_KEY
         self.api_url = GOOGLE_API_CONFIG['api_url']
-        self.executor = ThreadPoolExecutor(max_workers=DOCUMENT_CONFIG['max_parallel_requests'])
+        max_workers = getattr(DOCUMENT_CONFIG, 'max_parallel_requests', 3)
+        self.executor = ThreadPoolExecutor(max_workers=max_workers)
         
     async def process_chunk_async(self, chunk: str, query: str) -> str:
         try:
@@ -213,10 +238,7 @@ class EnhancedGeminiRetriever:
                     "topP": 0.8,
                     "topK": 40
                 },
-                "safetySettings": [
-                    {"category": k, "threshold": v}
-                    for k, v in GOOGLE_API_CONFIG['safety_settings'].items()
-                ]
+                "safetySettings": GOOGLE_API_CONFIG['safety_settings']
             }
             
             url = f"{self.api_url}?key={self.api_key}"
@@ -251,10 +273,7 @@ class EnhancedGeminiRetriever:
                     "topP": 0.8,
                     "topK": 40
                 },
-                "safetySettings": [
-                    {"category": k, "threshold": v}
-                    for k, v in GOOGLE_API_CONFIG['safety_settings'].items()
-                ]
+                "safetySettings": GOOGLE_API_CONFIG['safety_settings']
             }
             
             url = f"{self.api_url}?key={self.api_key}"
@@ -281,43 +300,67 @@ class HybridKnowledgeRetriever:
         self.mixtral_retriever = MixtralKnowledgeRetriever()
         
     async def process_chunks_parallel(self, chunks: List[str], query: str) -> List[str]:
-        tasks = [
-            self.gemini_retriever.process_chunk_async(chunk, query)
-            for chunk in chunks
-        ]
+        tasks = []
+        for chunk in chunks:
+            try:
+                task = self.gemini_retriever.process_chunk_async(chunk, query)
+                tasks.append(task)
+            except Exception as e:
+                print(f"Gemini chunk processing failed, falling back to Mixtral: {str(e)}")
+                # Fallback to Mixtral for failed chunks
+                tasks.append(self.mixtral_retriever.get_knowledge(query, chunk))
         return await asyncio.gather(*tasks)
         
     def get_knowledge(self, query: str, document: str = None) -> str:
-        if document:
-            estimated_tokens = len(document.split()) * 1.3  # Better token estimation
+        try:
+            if document:
+                estimated_tokens = len(document.split()) * 1.3
+                
+                # Use Mixtral for very large documents
+                if estimated_tokens > DOCUMENT_CONFIG['use_mixtral_threshold']:
+                    print("Document exceeds Gemini threshold, using Mixtral...")
+                    return self.mixtral_retriever.get_knowledge(query, document)
+                
+                # Enhanced chunking for medium documents
+                if estimated_tokens > DOCUMENT_CONFIG['small_doc_limit']:
+                    chunks = self.chunk_document_with_overlap(
+                        document,
+                        DOCUMENT_CONFIG['chunk_size'],
+                        DOCUMENT_CONFIG['overlap']
+                    )
+                    
+                    # Process chunks with fallback handling
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                    try:
+                        responses = loop.run_until_complete(
+                            self.process_chunks_parallel(chunks, query)
+                        )
+                    except Exception as e:
+                        print(f"Parallel processing failed, falling back to Mixtral: {str(e)}")
+                        loop.close()
+                        return self.mixtral_retriever.get_knowledge(query, document)
+                    loop.close()
+                    
+                    # Combine and synthesize responses
+                    combined_response = "\n".join(filter(None, responses))
+                    synthesis_query = f"Synthesize these findings:\n{combined_response}"
+                    try:
+                        return self.gemini_retriever.get_knowledge(synthesis_query)
+                    except Exception as e:
+                        print(f"Synthesis failed, falling back to Mixtral: {str(e)}")
+                        return self.mixtral_retriever.get_knowledge(synthesis_query)
             
-            if estimated_tokens > DOCUMENT_CONFIG['medium_doc_limit']:
-                print("Large document detected, using Mixtral...")
+            # Try Gemini first for simple queries or small documents
+            try:
+                return self.gemini_retriever.get_knowledge(query)
+            except Exception as e:
+                print(f"Gemini processing failed, falling back to Mixtral: {str(e)}")
                 return self.mixtral_retriever.get_knowledge(query, document)
-            
-            # Enhanced chunking for medium documents
-            if estimated_tokens > DOCUMENT_CONFIG['small_doc_limit']:
-                chunks = self.chunk_document_with_overlap(
-                    document,
-                    DOCUMENT_CONFIG['chunk_size'],
-                    DOCUMENT_CONFIG['overlap']
-                )
                 
-                # Process chunks in parallel
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                responses = loop.run_until_complete(
-                    self.process_chunks_parallel(chunks, query)
-                )
-                loop.close()
-                
-                # Combine and synthesize responses
-                combined_response = "\n".join(filter(None, responses))
-                synthesis_query = f"Synthesize these findings:\n{combined_response}"
-                return self.gemini_retriever.get_knowledge(synthesis_query)
-                
-        # For small documents or no document, use Gemini directly
-        return self.gemini_retriever.get_knowledge(query)
+        except Exception as e:
+            print(f"Error in knowledge retrieval, using fallback: {str(e)}")
+            return self.mixtral_retriever.get_knowledge(query, document)
     
     def chunk_document_with_overlap(self, text: str, chunk_size: int, overlap: int) -> List[str]:
         words = text.split()
@@ -335,32 +378,81 @@ class HybridKnowledgeRetriever:
 class MixtralKnowledgeRetriever:
     def __init__(self):
         self.api_key = GROQ_API_KEY
-        self.model = 'mixtral-8x7b-32768'
-        self.max_tokens = 32768
+        self.model = GROQ_API_CONFIG['model']
+        self.api_url = GROQ_API_CONFIG['api_url']
         
-    def get_knowledge(self, query: str, document: str = None) -> str:
+    async def process_chunk_async(self, chunk: str, query: str) -> str:
         try:
             headers = {
                 'Authorization': f'Bearer {self.api_key}',
                 'Content-Type': 'application/json'
             }
             
-            content = query
+            data = {
+                'model': self.model,
+                'messages': [
+                    {'role': 'system', 'content': KNOWLEDGE_RETRIEVAL_PROMPT},
+                    {'role': 'user', 'content': f"Context: {chunk}\nQuery: {query}"}
+                ],
+                'max_tokens': GROQ_API_CONFIG['max_tokens'] // 2,
+                'temperature': GROQ_API_CONFIG['temperature']
+            }
+            
+            async with aiohttp.ClientSession() as session:
+                async with session.post(self.api_url, headers=headers, json=data) as response:
+                    if response.status == 200:
+                        result = await response.json()
+                        return result['choices'][0]['message']['content']
+                    else:
+                        print(f"Chunk processing error: {response.status}")
+                        return ""
+        except Exception as e:
+            print(f"Chunk processing error: {str(e)}")
+            return ""
+
+    def get_knowledge(self, query: str, document: str = None) -> str:
+        try:
             if document:
-                content = f"Document: {document}\n\nQuery: {query}"
-                
+                # Split into chunks if document is large
+                if len(document.split()) > DOCUMENT_CONFIG['model_thresholds']['medium']:
+                    chunks = self.chunk_document(
+                        document,
+                        GROQ_API_CONFIG['chunk_settings']['size'],
+                        GROQ_API_CONFIG['chunk_settings']['overlap']
+                    )
+                    
+                    # Process chunks in parallel
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                    responses = loop.run_until_complete(
+                        self.process_chunks_parallel(chunks, query)
+                    )
+                    loop.close()
+                    
+                    # Combine responses
+                    combined_response = "\n".join(filter(None, responses))
+                    return self.synthesize_responses(combined_response)
+            
+            # Direct processing for small documents or simple queries
+            headers = {
+                'Authorization': f'Bearer {self.api_key}',
+                'Content-Type': 'application/json'
+            }
+            
+            content = query if not document else f"Document: {document}\n\nQuery: {query}"
+            
             data = {
                 'model': self.model,
                 'messages': [
                     {'role': 'system', 'content': KNOWLEDGE_RETRIEVAL_PROMPT},
                     {'role': 'user', 'content': content}
                 ],
-                'max_tokens': self.max_tokens // 2,
-                'temperature': 0.7
+                'max_tokens': GROQ_API_CONFIG['max_tokens'] // 2,
+                'temperature': GROQ_API_CONFIG['temperature']
             }
             
             response = requests.post(
-                GROQ_API_URL,
+                self.api_url,
                 headers=headers,
                 json=data
             )
@@ -368,12 +460,67 @@ class MixtralKnowledgeRetriever:
             if response.status_code == 200:
                 return response.json()['choices'][0]['message']['content']
             else:
-                print(f"Mixtral API Error: {response.status_code} - {response.text}")
-                return f"Error: {response.status_code}"
+                raise Exception(f"API Error: {response.status_code}")
                 
         except Exception as e:
-            print(f"Error in Mixtral knowledge retrieval: {str(e)}")
-            return f"Error: {str(e)}"
+            print(f"Error in Mixtral processing: {str(e)}")
+            # Fallback to Gemini for errors
+            return self.fallback_to_gemini(query, document)
+
+    def fallback_to_gemini(self, query: str, document: str = None) -> str:
+        try:
+            gemini = GeminiKnowledgeRetriever()
+            return gemini.get_knowledge(query)
+        except Exception as e:
+            return f"Both primary and fallback models failed: {str(e)}"
+
+    async def process_chunks_parallel(self, chunks: List[str], query: str) -> List[str]:
+        tasks = [self.process_chunk_async(chunk, query) for chunk in chunks]
+        return await asyncio.gather(*tasks)
+
+    def chunk_document(self, text: str, chunk_size: int, overlap: int) -> List[str]:
+        words = text.split()
+        chunks = []
+        start = 0
+        
+        while start < len(words):
+            end = start + chunk_size
+            chunk = words[start:end]
+            chunks.append(' '.join(chunk))
+            start = end - overlap
+            
+        return chunks
+
+    def synthesize_responses(self, combined_response: str) -> str:
+        try:
+            headers = {
+                'Authorization': f'Bearer {self.api_key}',
+                'Content-Type': 'application/json'
+            }
+            
+            data = {
+                'model': self.model,
+                'messages': [
+                    {'role': 'system', 'content': SYNTHESIS_PROMPT},
+                    {'role': 'user', 'content': f"Synthesize these findings:\n{combined_response}"}
+                ],
+                'max_tokens': GROQ_API_CONFIG['max_tokens'] // 2,
+                'temperature': 0.7
+            }
+            
+            response = requests.post(
+                self.api_url,
+                headers=headers,
+                json=data
+            )
+            
+            if response.status_code == 200:
+                return response.json()['choices'][0]['message']['content']
+            else:
+                raise Exception(f"Synthesis API Error: {response.status_code}")
+        except Exception as e:
+            print(f"Synthesis error: {str(e)}")
+            return combined_response
 
 class RAGSystem:
     def __init__(self):
