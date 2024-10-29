@@ -1,7 +1,7 @@
 import requests
 import json
 import time
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional, Union
 from config import *
 from dotenv import load_dotenv
 import os
@@ -172,31 +172,130 @@ class RAGSystem:
             'final_synthesis': final_response
         }
 
-def main():
-    rag_system = RAGSystem()
-    print("Enhanced RAG System with Multi-Step Reasoning - Ready!")
-    print("Using models:", ", ".join(MODELS.keys()))
+class MultiAgentChat:
+    def __init__(self, api_key: str = None):
+        self.api_key = api_key or os.getenv('GROQ_API_KEY')
+        self.api_url = 'https://api.groq.com/openai/v1/chat/completions'
+        self.rag_system = RAGSystem()
+
+    def create(
+        self,
+        messages: List[Dict[str, str]],
+        model: str = "mixtral-8x7b-32768",
+        temperature: float = 0.7,
+        max_tokens: Optional[int] = None,
+        stream: bool = False,
+        **kwargs
+    ) -> Dict[str, Any]:
+        """
+        OpenAI-compatible chat completion method.
+        
+        Args:
+            messages: List of message dictionaries with 'role' and 'content'
+            model: Model identifier (default: mixtral-8x7b-32768)
+            temperature: Sampling temperature (default: 0.7)
+            max_tokens: Maximum tokens in response (optional)
+            stream: Whether to stream responses (not implemented)
+            **kwargs: Additional parameters
+            
+        Returns:
+            Dict containing response in OpenAI-compatible format
+        """
+        try:
+            # Extract the user's query from messages
+            user_query = ""
+            for msg in reversed(messages):
+                if msg['role'] == 'user':
+                    user_query = msg['content']
+                    break
+            
+            if not user_query:
+                raise ValueError("No user message found in the conversation")
+
+            # Process through RAG system
+            results = self.rag_system.process_query(user_query)
+            
+            # Format response in OpenAI-compatible structure
+            response = {
+                "id": f"rag-{int(time.time())}",
+                "object": "chat.completion",
+                "created": int(time.time()),
+                "model": model,
+                "choices": [{
+                    "index": 0,
+                    "message": {
+                        "role": "assistant",
+                        "content": results['final_synthesis'],
+                        "function_call": None,
+                    },
+                    "finish_reason": "stop"
+                }],
+                "usage": {
+                    "prompt_tokens": -1,  # Placeholder
+                    "completion_tokens": -1,  # Placeholder
+                    "total_tokens": -1  # Placeholder
+                },
+                "system_info": {
+                    "knowledge_retrieval": results['knowledge_retrieval'],
+                    "reasoning_steps": results['reasoning_steps']
+                }
+            }
+            
+            return response
+
+        except Exception as e:
+            raise Exception(f"Error in chat completion: {str(e)}")
+
+    def get_models(self) -> Dict[str, Any]:
+        """
+        Get available models in OpenAI-compatible format.
+        """
+        return {
+            "object": "list",
+            "data": [
+                {
+                    "id": model_id,
+                    "object": "model",
+                    "created": int(time.time()),
+                    "owned_by": "groq",
+                    "permission": [],
+                    "root": model_id,
+                    "parent": None,
+                    "context_window": config['max_tokens']
+                }
+                for model_id, config in MODELS.items()
+            ]
+        }
+
+# Example usage
+def example_usage():
+    # Initialize the client
+    client = MultiAgentChat()
     
-    while True:
-        user_input = input("\nEnter your query (or 'quit' to exit): ")
-        if user_input.lower() == 'quit':
-            break
+    # Create a chat completion
+    messages = [
+        {"role": "system", "content": "You are a helpful assistant."},
+        {"role": "user", "content": "Analyze the impact of AI on healthcare"}
+    ]
+    
+    try:
+        response = client.create(messages=messages)
         
-        print("\nProcessing your query across multiple models...")
-        results = rag_system.process_query(user_input)
+        # Access the main response
+        print("\nFinal Response:")
+        print(response['choices'][0]['message']['content'])
         
-        print("\n=== Knowledge Retrieval ===")
-        print(results['knowledge_retrieval'])
+        # Access additional information
+        print("\nKnowledge Retrieval:")
+        print(response['system_info']['knowledge_retrieval'])
         
-        print("\n=== Reasoning Steps ===")
-        for step, result in results['reasoning_steps'].items():
+        print("\nReasoning Steps:")
+        for step, content in response['system_info']['reasoning_steps'].items():
             print(f"\n{step}:")
-            print(result)
-        
-        print("\n=== Final Synthesis ===")
-        print(results['final_synthesis'])
-        
-        time.sleep(2)
+            print(content)
+            
+    except Exception as e:
+        print(f"Error: {str(e)}")
 
 if __name__ == "__main__":
-    main()
+    example_usage()
