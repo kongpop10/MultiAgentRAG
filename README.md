@@ -1,14 +1,15 @@
 # O1 Multi-Agent RAG System
 
-A sophisticated Retrieval-Augmented Generation (RAG) system that combines multiple Groq AI models with dynamic reasoning capabilities for in-depth analysis and problem-solving.
+A sophisticated Retrieval-Augmented Generation (RAG) system that combines Google's Gemini and Groq's AI models for comprehensive analysis and problem-solving.
 
 ## 🌟 Features
 
 ### 🤖 Multi-Model Architecture
-- **Knowledge Retrieval** (Mixtral-8x7B-32K)
-  - Comprehensive information extraction
-  - Context-aware retrieval
-  - 32K token context window
+- **Knowledge Retrieval** (Google Gemini Pro Experimental)
+  - Advanced context understanding
+  - Experimental model capabilities
+  - Enhanced information extraction
+  - Multi-modal potential
 
 - **Dynamic Reasoning** (Llama-3.1-70B)
   - Automated step planning
@@ -22,26 +23,27 @@ A sophisticated Retrieval-Augmented Generation (RAG) system that combines multip
   - Concise summaries
 
 ### 🔄 Intelligent Processing Pipeline
-1. **Knowledge Phase**
-   - Query analysis
-   - Information extraction
-   - Context building
+1. **Knowledge Phase** (Gemini)
+   - Advanced query analysis
+   - Experimental model features
+   - Deep context building
+   - Structured information retrieval
 
-2. **Reasoning Phase**
+2. **Reasoning Phase** (Llama)
    - Dynamic step planning
    - Specialized agent assignment
    - Step-by-step execution
    - Inter-step context sharing
 
-3. **Synthesis Phase**
+3. **Synthesis Phase** (Gemma)
    - Information integration
    - Key insight extraction
    - Recommendation generation
 
 ### 🛡️ Robust Error Handling
-- Rate limit management
+- Multi-API rate limit management
 - Automatic retries with exponential backoff
-- Graceful error recovery
+- Cross-platform error recovery
 - Comprehensive error logging
 
 ## 🚀 Getting Started
@@ -49,6 +51,7 @@ A sophisticated Retrieval-Augmented Generation (RAG) system that combines multip
 ### Prerequisites
 - Python 3.8+
 - Groq API access
+- Google API access (Gemini)
 - Virtual environment tool
 
 ### Installation
@@ -73,7 +76,9 @@ pip install -r requirements.txt
 4. **Configure Environment**
 ```bash
 cp .env.example .env
-# Edit .env and add your Groq API key
+# Add your API keys to .env:
+# GROQ_API_KEY=your_groq_api_key
+# GOOGLE_API_KEY=your_google_api_key
 ```
 
 ## 💻 Usage
@@ -85,16 +90,16 @@ python main.py
 # Example interaction
 Enter your query: What are the implications of quantum computing?
 
-=== Knowledge Retrieval ===
-[System retrieves comprehensive information]
+=== Knowledge Retrieval (Gemini) ===
+[Advanced information retrieval using experimental model]
 
-=== Reasoning Steps ===
+=== Reasoning Steps (Llama) ===
 Step 1: Current State Analysis
 Step 2: Impact Assessment
 Step 3: Future Implications
 
-=== Final Synthesis ===
-[System provides actionable insights]
+=== Final Synthesis (Gemma) ===
+[Comprehensive insights and recommendations]
 ```
 
 ## 🏗️ Project Structure
@@ -103,7 +108,7 @@ MultiAgentRAG/
 ├── main.py           # Core application logic
 ├── config.py         # Configuration and prompts
 ├── requirements.txt  # Dependencies
-├── .env             # API key (create from .env.example)
+├── .env             # API keys (create from .env.example)
 └── README.md        # Documentation
 ```
 
@@ -111,35 +116,41 @@ MultiAgentRAG/
 
 ### Environment Variables
 ```env
-GROQ_API_KEY=your_api_key_here  # Get from console.groq.com
+GROQ_API_KEY=your_groq_api_key_here    # From console.groq.com
+GOOGLE_API_KEY=your_google_api_key_here # From Google Cloud Console
 ```
 
 ### Model Configurations
 Available in `config.py`:
+- Gemini experimental settings
 - Token limits
 - Rate limit parameters
 - System prompts
 - Error handling settings
 
 ## ⚠️ Known Limitations
-1. **Rate Limits**
-   - 6000 tokens per minute
+1. **API Rate Limits**
+   - Groq: 6000 tokens per minute
+   - Gemini: Based on quota
    - Automatic handling implemented
 
 2. **Model Constraints**
+   - Gemini: Experimental features
    - Context windows vary by model
    - Processing time varies with complexity
 
-3. **API Dependence**
+3. **API Dependencies**
    - Requires stable internet connection
-   - Subject to API availability
+   - Multiple API availability required
+   - Experimental model stability
 
 ## 🔮 Ways to Improve
-- [ ] Additional model support
+- [ ] Expand Gemini capabilities
 - [ ] Enhanced error handling
 - [ ] Performance optimizations
 - [ ] Web interface
 - [ ] API endpoint support
+- [ ] Multi-modal input support
 
 ## 📫 Support & Contact
 - [Report Issues](https://github.com/kongpop10/MultiAgentRAG/issues)

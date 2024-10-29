@@ -26,3 +26,9 @@ tenacity==8.2.3
 # Optional - for future web interface
 fastapi==0.109.2
 uvicorn==0.27.1
+
+# Async HTTP client
+aiohttp==3.9.1
+
+# Async event loop
+asyncio==3.4.3

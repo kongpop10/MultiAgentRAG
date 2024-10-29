@@ -1,9 +1,10 @@
 # Model-specific prompts and configurations
 KNOWLEDGE_RETRIEVAL_PROMPT = """You are a knowledge retrieval specialist. Your task is to:
-1. Extract key information from the query
+1. Extract key information from the query and provided document (if any)
 2. Organize relevant context and facts
 3. Identify important relationships and patterns
 4. Present the information in a clear, structured format
+5. If working with document chunks, focus on maintaining context
 Be comprehensive but focused on relevance."""
 
 REASONING_PLANNER_PROMPT = """You are a reasoning planning specialist. Your task is to:
@@ -46,4 +47,32 @@ TOKEN_CONFIGS = {
     'max_input_tokens': 4000,
     'max_output_tokens': 2000,
     'summary_length': 150
+}
+
+# Update Google API configuration for paid tier
+GOOGLE_API_CONFIG = {
+    'model': 'gemini-1.5-pro',  # Using pro model instead of flash
+    'api_url': 'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent',
+    'max_tokens': 8192,  # Increased token limit
+    'api_version': 'v1',
+    'streaming': True,  # Enable streaming for faster responses
+    'safety_settings': {
+        'HARM_CATEGORY_HARASSMENT': 'BLOCK_NONE',
+        'HARM_CATEGORY_HATE_SPEECH': 'BLOCK_NONE',
+        'HARM_CATEGORY_SEXUALLY_EXPLICIT': 'BLOCK_NONE',
+        'HARM_CATEGORY_DANGEROUS_CONTENT': 'BLOCK_NONE'
+    },
+    'parallel_requests': True,  # Enable parallel processing
+    'chunk_size': 4000,  # Larger chunk size for processing
+    'overlap': 400      # Increased overlap for better context
+}
+
+# Enhanced document handling for paid tier
+DOCUMENT_CONFIG = {
+    'small_doc_limit': 4000,    # Increased limits
+    'medium_doc_limit': 8192,   # Maximum pro model context
+    'chunk_size': 4000,         # Larger chunks
+    'overlap': 400,             # Better context preservation
+    'parallel_chunks': 5,       # Number of parallel chunk processing
+    'max_parallel_requests': 10  # Maximum parallel requests
 }
