@@ -10,7 +10,6 @@ A robust Retrieval-Augmented Generation (RAG) system optimized for large documen
   - Efficient parallel processing
   - Production-ready performance
   - Better data privacy
-  - Initial free credits ($10)
   - Optimized for large documents
 
 - **Fallback Model: Gemini 1.5 Flash (Free Tier)**
