@@ -1,163 +1,187 @@
 # O1 Multi-Agent RAG System
 
-A sophisticated Retrieval-Augmented Generation (RAG) system that combines Google's Gemini and Groq's AI models for comprehensive analysis and problem-solving.
+A sophisticated Retrieval-Augmented Generation (RAG) system that combines Google's Gemini Pro and Groq's AI models for comprehensive analysis and problem-solving, with advanced document handling capabilities.
 
 ## 🌟 Features
 
 ### 🤖 Multi-Model Architecture
-- **Knowledge Retrieval** (Google Gemini Pro Experimental)
-  - Advanced context understanding
-  - Experimental model capabilities
-  - Enhanced information extraction
-  - Multi-modal potential
+- **Knowledge Retrieval** (Google Gemini Pro)
+  - Parallel document processing
+  - Advanced chunking with overlap
+  - Asynchronous operations
+  - Adaptive model selection
+  - Auto-scaling based on document size
 
 - **Dynamic Reasoning** (Llama-3.1-70B)
-  - Automated step planning
-  - Multiple specialized reasoning agents
+  - Multi-step reasoning pipeline
+  - Context-aware analysis
   - Sequential logic processing
-  - Context inheritance between steps
+  - Dynamic step generation
 
 - **Final Synthesis** (Gemma-7B)
-  - Coherent integration of insights
-  - Actionable recommendations
-  - Concise summaries
+  - Comprehensive insight integration
+  - Structured recommendations
+  - Context preservation
+  - Clear action items
 
-### 🔄 Intelligent Processing Pipeline
-1. **Knowledge Phase** (Gemini)
-   - Advanced query analysis
-   - Experimental model features
-   - Deep context building
-   - Structured information retrieval
+### 🔄 Hybrid Processing Pipeline
+1. **Document Analysis**
+   - Automatic size detection
+   - Smart chunking strategy
+   - Parallel processing
+   - Context preservation
 
-2. **Reasoning Phase** (Llama)
-   - Dynamic step planning
-   - Specialized agent assignment
-   - Step-by-step execution
-   - Inter-step context sharing
+2. **Knowledge Extraction**
+   - Model selection based on complexity
+   - Asynchronous chunk processing
+   - Context merging
+   - Intelligent synthesis
 
-3. **Synthesis Phase** (Gemma)
-   - Information integration
-   - Key insight extraction
-   - Recommendation generation
+3. **Reasoning & Synthesis**
+   - Multi-step analysis
+   - Cross-reference validation
+   - Coherent output generation
 
-### 🛡️ Robust Error Handling
-- Multi-API rate limit management
-- Automatic retries with exponential backoff
-- Cross-platform error recovery
-- Comprehensive error logging
-
-## 🚀 Getting Started
+## 🚀 Quick Start
 
 ### Prerequisites
-- Python 3.8+
-- Groq API access
-- Google API access (Gemini)
-- Virtual environment tool
+```bash
+Python 3.8+
+Groq API access
+Google API access (Gemini Pro)
+```
 
 ### Installation
-
-1. **Clone the Repository**
 ```bash
+# Clone and setup
 git clone https://github.com/kongpop10/MultiAgentRAG.git
 cd MultiAgentRAG
-```
 
-2. **Set Up Virtual Environment**
-```bash
+# Create virtual environment
 python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-```
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
 
-3. **Install Dependencies**
-```bash
+# Install dependencies
 pip install -r requirements.txt
-```
 
-4. **Configure Environment**
-```bash
+# Configure environment
 cp .env.example .env
-# Add your API keys to .env:
-# GROQ_API_KEY=your_groq_api_key
-# GOOGLE_API_KEY=your_google_api_key
+# Add your API keys to .env
 ```
 
 ## 💻 Usage
 
-```bash
-# Run the system
+### Basic Query
+```python
 python main.py
-
-# Example interaction
-Enter your query: What are the implications of quantum computing?
-
-=== Knowledge Retrieval (Gemini) ===
-[Advanced information retrieval using experimental model]
-
-=== Reasoning Steps (Llama) ===
-Step 1: Current State Analysis
-Step 2: Impact Assessment
-Step 3: Future Implications
-
-=== Final Synthesis (Gemma) ===
-[Comprehensive insights and recommendations]
+Enter your query: Analyze the impact of AI on healthcare
 ```
 
-## 🏗️ Project Structure
+### Document Analysis
+```python
+# The system automatically handles:
+- Small documents (<4000 tokens): Direct processing
+- Medium documents: Parallel chunk processing
+- Large documents (>8192 tokens): Mixtral model
 ```
-MultiAgentRAG/
-├── main.py           # Core application logic
-├── config.py         # Configuration and prompts
-├── requirements.txt  # Dependencies
-├── .env             # API keys (create from .env.example)
-└── README.md        # Documentation
-```
+
+## 🔧 Advanced Features
+
+### Parallel Processing
+- Automatic thread pool management
+- Configurable chunk sizes
+- Overlap for context preservation
+- Asynchronous operations
+
+### Error Handling
+- Rate limit management
+- Automatic retries
+- Error recovery
+- Comprehensive logging
+
+### Document Processing
+- Smart chunking
+- Context preservation
+- Parallel execution
+- Adaptive model selection
 
 ## ⚙️ Configuration
 
-### Environment Variables
+### Environment Setup
 ```env
-GROQ_API_KEY=your_groq_api_key_here    # From console.groq.com
-GOOGLE_API_KEY=your_google_api_key_here # From Google Cloud Console
+GROQ_API_KEY=your_groq_api_key    # From console.groq.com
+GOOGLE_API_KEY=your_google_api_key # From Google Cloud Console
 ```
 
-### Model Configurations
-Available in `config.py`:
-- Gemini experimental settings
+### Customizable Parameters
+```python
+# config.py
+- Chunk sizes
 - Token limits
-- Rate limit parameters
-- System prompts
-- Error handling settings
+- Parallel requests
+- Safety settings
+- Processing thresholds
+```
 
-## ⚠️ Known Limitations
-1. **API Rate Limits**
-   - Groq: 6000 tokens per minute
-   - Gemini: Based on quota
-   - Automatic handling implemented
+## 📊 Performance
 
-2. **Model Constraints**
-   - Gemini: Experimental features
-   - Context windows vary by model
-   - Processing time varies with complexity
+### Processing Capabilities
+- Small docs: < 2 seconds
+- Medium docs: 2-5 seconds
+- Large docs: 5-10 seconds
 
-3. **API Dependencies**
-   - Requires stable internet connection
-   - Multiple API availability required
-   - Experimental model stability
+### Optimization Features
+- Parallel processing
+- Async operations
+- Smart caching
+- Rate limit optimization
 
-## 🔮 Ways to Improve
-- [ ] Expand Gemini capabilities
-- [ ] Enhanced error handling
-- [ ] Performance optimizations
+## 🛠️ Development
+
+### Project Structure
+```
+MultiAgentRAG/
+├── main.py           # Core logic & API integration
+├── config.py         # Settings & configurations
+├── requirements.txt  # Dependencies
+├── .env             # API keys (from .env.example)
+└── README.md        # Documentation
+```
+
+### Key Components
+- Hybrid Knowledge Retriever
+- Reasoning Orchestrator
+- Enhanced Gemini Integration
+- Parallel Processing Engine
+
+## 🔮 Future Enhancements
+- [ ] Streaming responses
 - [ ] Web interface
-- [ ] API endpoint support
-- [ ] Multi-modal input support
+- [ ] API endpoints
+- [ ] Document caching
+- [ ] Enhanced parallelization
+- [ ] Memory optimization
 
-## 📫 Support & Contact
+## ⚠️ Limitations & Considerations
+1. **API Constraints**
+   - Rate limits vary by tier
+   - Token limitations
+   - Response time variation
+
+2. **Resource Usage**
+   - Memory for large documents
+   - CPU for parallel processing
+   - Network bandwidth
+
+## 📫 Support
 - [Report Issues](https://github.com/kongpop10/MultiAgentRAG/issues)
-- [Request Features](https://github.com/kongpop10/MultiAgentRAG/issues)
+- [Feature Requests](https://github.com/kongpop10/MultiAgentRAG/issues)
+- [Documentation](https://github.com/kongpop10/MultiAgentRAG/wiki)
 
 ## 📝 License
 MIT License
 
 ---
-[GitHub Repository](https://github.com/kongpop10/MultiAgentRAG) | [Report Bug](https://github.com/kongpop10/MultiAgentRAG/issues)
+Made with 💻 by [Kongpop]
+
+[Repository](https://github.com/kongpop10/MultiAgentRAG) | [Issues](https://github.com/kongpop10/MultiAgentRAG/issues)
